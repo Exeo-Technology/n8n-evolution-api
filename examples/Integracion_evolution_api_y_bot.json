@@ -1,0 +1,214 @@
+{
+  "name": "Integracion evolution api y bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution_api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -260,
+        -60
+      ],
+      "id": "d917c28c-9679-4cc4-85a8-b1acb9945649",
+      "name": "Webhook",
+      "webhookId": "021e75e4-9ec4-4251-86c1-f3e67e7041d7"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d61bb9cf-11ee-4ef2-8316-0df2acd8a02d",
+              "name": "chat_id",
+              "value": "={{ $json.body.data.key.remoteJid }}",
+              "type": "string"
+            },
+            {
+              "id": "a6430280-da3b-40f5-938d-005d643744a7",
+              "name": "apikey",
+              "value": "={{ $json.body.apikey }}",
+              "type": "string"
+            },
+            {
+              "id": "ac06617c-f7e9-4b37-9f4c-2632ca125d04",
+              "name": "server_url",
+              "value": "={{ $json.body.server_url }}",
+              "type": "string"
+            },
+            {
+              "id": "344f0147-9e0d-46a2-9487-3df3e94319fa",
+              "name": "instance",
+              "value": "={{ $json.body.instance }}",
+              "type": "string"
+            },
+            {
+              "id": "e5c74400-f7c6-4e68-acb3-7702849136f8",
+              "name": "conversation",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -40,
+        -60
+      ],
+      "id": "d0f90c40-a28a-4dc1-a203-3fdaaae7db49",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=El usuario te envia el siguiente mensaje:\nUsuario  {{ $json.chat_id }}\n\nMensaje {{ $json.conversation }}\n\n\n\n\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        180,
+        -60
+      ],
+      "id": "6651d851-ed75-417e-b819-a512de37a2c5",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        180
+      ],
+      "id": "11ffb739-5b0c-4ccf-a78f-09955fda34e1",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SQxcK5JzqKqTwkOt",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "messages-api",
+        "instanceName": "tucson",
+        "remoteJid": "={{ $('Edit Fields').item.json.chat_id }}",
+        "messageText": "={{ $json.output }}",
+        "options_message": {}
+      },
+      "type": "n8n-nodes-evolution-api.evolutionApi",
+      "typeVersion": 1,
+      "position": [
+        580,
+        -60
+      ],
+      "id": "dac651ac-70a5-4b47-9019-907b7d44da7c",
+      "name": "Evolution API",
+      "credentials": {
+        "evolutionApi": {
+          "id": "MYrgFrtXOz4Pw6oW",
+          "name": "Evolution account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.chat_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        180
+      ],
+      "id": "335968bc-95cb-4dc9-beeb-5703b3d1d1cf",
+      "name": "Simple Memory"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Evolution API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d6fe7174-f0a0-4d8a-995a-d457d80e634d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c4e942bc5f585e82830bd04e4c973d6e427405d2d34c58b3719bf8238db97533"
+  },
+  "id": "I1T74pXL1TDH7kJz",
+  "tags": []
+}
